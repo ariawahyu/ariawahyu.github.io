@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creative Interactive Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #quiz-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+    }
+    .question {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .options button {
+      background: #66a6ff;
+      border: none;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      margin: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .options button:hover {
+      transform: scale(1.05);
+    }
+    #next-btn {
+      margin-top: 1rem;
+      padding: 0.75rem 2rem;
+      border: none;
+      background: #ff6b6b;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+    #score-panel {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+    }
+    #timer {
+      position: absolute;
+      top: -16px;
+      right: -16px;
+      background: #ff6b6b;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 50%;
+      font-weight: bold;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="quiz-container">
+    <div id="timer">20</div>
+    <div class="question" id="question-text"></div>
+    <div class="options" id="options-container"></div>
+    <button id="next-btn">Next</button>
+    <div id="score-panel"></div>
+  </div>
+  <form action="https://script.google.com/macros/s/AKfycbxgDS6kqw38QeUFZkECrnhPFIBN5mKIwwTW-Q0SRqjQHNKzUU7ByxXna9IN5eMLsDwSKg/exec"></form>
+  <script>
+    const quizData = [
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: "Mars"
+      },
+      {
+        question: "What is the capital city of Japan?",
+        options: ["Seoul", "Beijing", "Tokyo", "Bangkok"],
+        answer: "Tokyo"
+      },
+      {
+        question: "Who wrote 'Romeo and Juliet'?",
+        options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"],
+        answer: "William Shakespeare"
+      },
+      {
+        question: "What is the chemical symbol for Gold?",
+        options: ["Au", "Ag", "Gd", "Go"],
+        answer: "Au"
+      }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 20;
+
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const nextBtn = document.getElementById('next-btn');
+    const scorePanel = document.getElementById('score-panel');
+    const timerEl = document.getElementById('timer');
+
+    function startTimer() {
+      timeLeft = 20;
+      timerEl.textContent = timeLeft;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          revealAnswer();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      clearInterval(timer);
+      startTimer();
+      nextBtn.style.display = 'none';
+      const current = quizData[currentIndex];
+      questionText.textContent = `Q${currentIndex + 1}. ${current.question}`;
+      optionsContainer.innerHTML = '';
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.addEventListener('click', () => selectOption(btn, current.answer));
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectOption(btn, correct) {
+      clearInterval(timer);
+      const buttons = optionsContainer.querySelectorAll('button');
+      buttons.forEach(b => b.disabled = true);
+      if (btn.textContent === correct) {
+        btn.style.background = '#4caf50';
+        score++;
+      } else {
+        btn.style.background = '#f44336';
+        buttons.forEach(b => {
+          if (b.textContent === correct) b.style.background = '#4caf50';
+        });
+      }
+      nextBtn.style.display = 'inline-block';
+    }
+
+    function revealAnswer() {
+      const current = quizData[currentIndex];
+      const buttons = optionsContainer.querySelectorAll('button');
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === current.answer) b.style.background = '#4caf50';
+      });
+      nextBtn.style.display = 'inline-block';
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentIndex++;
+      if (currentIndex < quizData.length) {
+        loadQuestion();
+      } else {
+        showScore();
+      }
+    });
+
+    function showScore() {
+  clearInterval(timer);
+    // Tampilkan di page
+    questionText.textContent = 'Quiz Complete!';
+    optionsContainer.innerHTML = '';
+  nextBtn.style.display = 'none';
+  scorePanel.textContent = `Your Score: ${score} / ${quizData.length}`;
+  
+  // Minta nama
+  const name = prompt("Masukkan nama lengkap kamu:");
+  // Kirim ke Google Sheets
+  fetch("https://script.google.com/macros/s/AKfycbyzEig3acFIYyQhCdlQTstVPg2SRjcxHMbPeG4Ih1RgtIvxZ7epyTO3SDZ3Z3IWAYll3w/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      name: name,
+      score: score,
+      total: quizData.length
+    })
+  })
+  .then(res => res.json())
+  .then(j => console.log("Submit status:", j.status))
+  .catch(console.error);
+}
+
+
+    // Initialize
+    loadQuestion();
+  </script>
+</body>
+</html>
